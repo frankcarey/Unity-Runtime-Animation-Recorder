@@ -1,4 +1,5 @@
 ﻿#if UNITY_EDITOR
+using System;
 using UnityEngine;
 using UnityEditor;
 using System.Collections;
@@ -24,6 +25,8 @@ public class UnityAnimationRecorder : MonoBehaviour {
 	public int recordFrames = 1000;
 	int frameIndex = 0;
 
+	public float recordAtFPS = 30;
+
 	public bool changeTimeScale = false;
 	public float timeScaleOnStart = 0.0f;
 	public float timeScaleOnRecord = 1.0f;
@@ -38,6 +41,7 @@ public class UnityAnimationRecorder : MonoBehaviour {
 
 	bool isStart = false;
 	float nowTime = 0.0f;
+	private float lastTime = -1;
 
 	// Use this for initialization
 	void Start () {
@@ -73,10 +77,10 @@ public class UnityAnimationRecorder : MonoBehaviour {
 		if (changeTimeScale)
 			Time.timeScale = timeScaleOnStart;
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
-	
+
 		if (Input.GetKeyDown (startRecordKey)) {
 			StartRecording ();
 		}
@@ -88,6 +92,12 @@ public class UnityAnimationRecorder : MonoBehaviour {
 		if (isStart) {
 			nowTime += Time.deltaTime;
 
+			// If not enough time has passed, don't record this.
+			if (nowTime - lastTime < 1f / recordAtFPS)
+			{
+				return;
+			}
+
 			for (int i = 0; i < objRecorders.Length; i++) {
 				objRecorders [i].AddFrame (nowTime);
 			}
@@ -97,6 +107,8 @@ public class UnityAnimationRecorder : MonoBehaviour {
 					blendShapeRecorders [i].AddFrame (nowTime);
 				}
 			}
+
+			lastTime = nowTime;
 		}
 
 	}
@@ -178,7 +190,7 @@ public class UnityAnimationRecorder : MonoBehaviour {
 				for (int x = 0; x < curves.Length; x++) {
 					clip.SetCurve (blendShapeRecorders [i].pathName, typeof(SkinnedMeshRenderer), curves [x].propertyName, curves [x].animCurve);
 				}
-				
+
 			}
 		}
 
